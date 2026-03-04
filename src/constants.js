@@ -20,30 +20,38 @@ export const AMENITIES = [
 export const STATUS_CONFIG = {
   considering: {
     label: 'Considering',
-    bgClass: 'bg-blue-100 text-blue-700',
-    dotClass: 'bg-blue-500',
+    bgClass: 'bg-blue-500/10 text-blue-400 ring-1 ring-blue-500/20',
+    dotClass: 'bg-blue-400',
   },
   visited: {
     label: 'Visited',
-    bgClass: 'bg-violet-100 text-violet-700',
-    dotClass: 'bg-violet-500',
+    bgClass: 'bg-violet-500/10 text-violet-400 ring-1 ring-violet-500/20',
+    dotClass: 'bg-violet-400',
   },
   top_pick: {
     label: 'Top Pick',
-    bgClass: 'bg-emerald-100 text-emerald-700',
-    dotClass: 'bg-emerald-500',
+    bgClass: 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20',
+    dotClass: 'bg-emerald-400',
   },
   rejected: {
     label: 'Rejected',
-    bgClass: 'bg-rose-100 text-rose-700',
-    dotClass: 'bg-rose-500',
+    bgClass: 'bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/20',
+    dotClass: 'bg-rose-400',
   },
 }
 
 export const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
   { value: 'oldest', label: 'Oldest First' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'rating_desc', label: 'Rating: High to Low' },
+  { value: 'price_asc', label: 'Price: Low → High' },
+  { value: 'price_desc', label: 'Price: High → Low' },
+  { value: 'rating_desc', label: 'Rating: High → Low' },
 ]
+
+export const INPUT_CLASS = [
+  'w-full px-3 py-2.5 rounded-lg text-sm',
+  'bg-slate-800/60 border border-slate-700/60',
+  'text-slate-100 placeholder:text-slate-500',
+  'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/40',
+  'transition-colors',
+].join(' ')

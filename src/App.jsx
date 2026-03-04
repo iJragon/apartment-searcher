@@ -54,13 +54,12 @@ export default function App() {
     return acc
   }, {})
 
-  // Keep detail view in sync with latest data after edits
   const liveDetailApartment = detailApartment
-    ? apartments.find(a => a.id === detailApartment.id) || null
+    ? apartments.find(a => a.id === detailApartment.id) ?? null
     : null
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen">
       <Header
         count={apartments.length}
         onAdd={handleAdd}
