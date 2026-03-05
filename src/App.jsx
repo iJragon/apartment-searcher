@@ -1,20 +1,76 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useApartments } from './hooks/useApartments'
+import { useAuth } from './hooks/useAuth'
+import { useRoom } from './hooks/useRoom'
 import Header from './components/Header'
 import FilterBar from './components/FilterBar'
 import ApartmentGrid from './components/ApartmentGrid'
 import ApartmentPanel from './components/ApartmentPanel'
 import ApartmentDetail from './components/ApartmentDetail'
+import AuthModal from './components/AuthModal'
+import ShareModal from './components/ShareModal'
+import RoomBanner from './components/RoomBanner'
+
+// Detect ?room= URL param
+function getRoomIdFromUrl() {
+  return new URLSearchParams(window.location.search).get('room')
+}
+
+function leaveRoom() {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('room')
+  window.location.href = url.toString()
+}
 
 export default function App() {
-  const { apartments, addApartment, updateApartment, deleteApartment, exportData, importData } = useApartments()
+  const urlRoomId = getRoomIdFromUrl()
+  const roomMode = Boolean(urlRoomId)
+
+  // Auth
+  const { user, profile, loading: authLoading, signUp, signIn, signOut } = useAuth()
+
+  // Private tracker (localStorage)
+  const {
+    apartments: privateApartments,
+    addApartment: privateAdd,
+    updateApartment: privateUpdate,
+    deleteApartment: privateDelete,
+    exportData,
+    importData,
+  } = useApartments()
+
+  // Shared room (Supabase) — only active when ?room= is in URL
+  const {
+    room,
+    apartments: roomApartments,
+    loading: roomLoading,
+    error: roomError,
+    addApartment: roomAdd,
+    updateApartment: roomUpdate,
+    deleteApartment: roomDelete,
+    updateAccess,
+  } = useRoom(urlRoomId, user ? { ...user, profile } : null)
+
+  // Active data source
+  const apartments = roomMode ? roomApartments : privateApartments
+  const addApartment = roomMode ? roomAdd : privateAdd
+  const updateApartment = roomMode ? roomUpdate : privateUpdate
+  const deleteApartment = roomMode ? roomDelete : privateDelete
+
+  // Can edit in room mode: must be logged in + room access is 'edit'
+  const canEdit = !roomMode || (user && room?.access === 'edit')
+
+  // UI state
   const [panelOpen, setPanelOpen] = useState(false)
   const [editingApartment, setEditingApartment] = useState(null)
   const [detailApartment, setDetailApartment] = useState(null)
   const [filter, setFilter] = useState('all')
   const [sort, setSort] = useState('newest')
+  const [showAuth, setShowAuth] = useState(false)
+  const [showShare, setShowShare] = useState(false)
 
   function handleAdd() {
+    if (roomMode && !user) { setShowAuth(true); return }
     setEditingApartment(null)
     setPanelOpen(true)
   }
@@ -25,19 +81,27 @@ export default function App() {
     setPanelOpen(true)
   }
 
-  function handleSave(data) {
-    if (editingApartment) {
-      updateApartment(editingApartment.id, data)
-    } else {
-      addApartment(data)
+  async function handleSave(data) {
+    try {
+      if (editingApartment) {
+        await updateApartment(editingApartment.id, data)
+      } else {
+        await addApartment(data)
+      }
+      setPanelOpen(false)
+      setEditingApartment(null)
+    } catch (err) {
+      alert('Failed to save: ' + err.message)
     }
-    setPanelOpen(false)
-    setEditingApartment(null)
   }
 
-  function handleDelete(id) {
-    deleteApartment(id)
-    if (detailApartment?.id === id) setDetailApartment(null)
+  async function handleDelete(id) {
+    try {
+      await deleteApartment(id)
+      if (detailApartment?.id === id) setDetailApartment(null)
+    } catch (err) {
+      alert('Failed to delete: ' + err.message)
+    }
   }
 
   async function handleImport(file) {
@@ -49,14 +113,57 @@ export default function App() {
     }
   }
 
-  const counts = apartments.reduce((acc, apt) => {
-    acc[apt.status] = (acc[apt.status] || 0) + 1
-    return acc
-  }, {})
+  function handleShareClick() {
+    if (!user) { setShowAuth(true); return }
+    setShowShare(true)
+  }
+
+  const counts = useMemo(() =>
+    apartments.reduce((acc, apt) => {
+      acc[apt.status] = (acc[apt.status] || 0) + 1
+      return acc
+    }, {}),
+  [apartments])
 
   const liveDetailApartment = detailApartment
     ? apartments.find(a => a.id === detailApartment.id) ?? null
     : null
+
+  // Room mode: show login wall if not authenticated
+  if (roomMode && !authLoading && !user) {
+    return (
+      <>
+        <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+          <div className="text-4xl mb-4">🔗</div>
+          <h1 className="text-xl font-bold text-white mb-2">You've been invited to a shared room</h1>
+          <p className="text-sm text-slate-400 mb-6">Sign in or create an account to view this apartment tracker.</p>
+          <button
+            onClick={() => setShowAuth(true)}
+            className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
+          >
+            Sign in / Register
+          </button>
+        </div>
+        {showAuth && (
+          <AuthModal onAuth={{ signIn, signUp }} onClose={() => setShowAuth(false)} />
+        )}
+      </>
+    )
+  }
+
+  // Room mode: error state
+  if (roomMode && !roomLoading && roomError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+        <div className="text-4xl mb-4">🚫</div>
+        <h1 className="text-xl font-bold text-white mb-2">Room not found</h1>
+        <p className="text-sm text-slate-400 mb-6">{roomError}</p>
+        <button onClick={leaveRoom} className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+          ← Go to my tracker
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen">
@@ -65,7 +172,23 @@ export default function App() {
         onAdd={handleAdd}
         onExport={exportData}
         onImport={handleImport}
+        user={user}
+        profile={profile}
+        onSignIn={() => setShowAuth(true)}
+        onSignOut={signOut}
+        onShare={handleShareClick}
+        roomMode={roomMode}
       />
+
+      {roomMode && room && (
+        <RoomBanner
+          room={room}
+          isOwner={user?.id === room.owner_id}
+          onToggleAccess={updateAccess}
+          onLeave={leaveRoom}
+        />
+      )}
+
       <FilterBar
         filter={filter}
         onFilterChange={setFilter}
@@ -73,18 +196,28 @@ export default function App() {
         onSortChange={setSort}
         counts={counts}
       />
+
       <main className="max-w-6xl mx-auto px-4 py-6">
-        <ApartmentGrid
-          apartments={apartments}
-          filter={filter}
-          sort={sort}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onSelect={setDetailApartment}
-        />
+        {roomMode && roomLoading ? (
+          <div className="flex items-center justify-center py-32">
+            <div className="text-slate-500 text-sm">Loading room…</div>
+          </div>
+        ) : (
+          <ApartmentGrid
+            apartments={apartments}
+            filter={filter}
+            sort={sort}
+            onEdit={canEdit ? handleEdit : null}
+            onDelete={canEdit ? handleDelete : null}
+            onSelect={setDetailApartment}
+            canEdit={canEdit}
+            roomMode={roomMode}
+            onAdd={canEdit ? handleAdd : null}
+          />
+        )}
       </main>
 
-      {panelOpen && (
+      {panelOpen && canEdit && (
         <ApartmentPanel
           apartment={editingApartment}
           onSave={handleSave}
@@ -95,10 +228,19 @@ export default function App() {
       {liveDetailApartment && (
         <ApartmentDetail
           apartment={liveDetailApartment}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={canEdit ? handleEdit : null}
+          onDelete={canEdit ? handleDelete : null}
           onClose={() => setDetailApartment(null)}
+          canEdit={canEdit}
         />
+      )}
+
+      {showAuth && (
+        <AuthModal onAuth={{ signIn, signUp }} onClose={() => setShowAuth(false)} />
+      )}
+
+      {showShare && user && (
+        <ShareModal user={user} onClose={() => setShowShare(false)} />
       )}
     </div>
   )

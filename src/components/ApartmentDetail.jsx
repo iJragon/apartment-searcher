@@ -19,7 +19,7 @@ function StatBox({ label, value, accent }) {
   )
 }
 
-export default function ApartmentDetail({ apartment, onEdit, onDelete, onClose }) {
+export default function ApartmentDetail({ apartment, onEdit, onDelete, onClose, canEdit = true }) {
   if (!apartment) return null
 
   const status = STATUS_CONFIG[apartment.status] ?? STATUS_CONFIG.considering
@@ -186,18 +186,31 @@ export default function ApartmentDetail({ apartment, onEdit, onDelete, onClose }
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-white/[0.06] flex justify-between items-center shrink-0">
-          <button
-            onClick={handleDelete}
-            className="px-3 py-2 text-sm text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
-          >
-            Delete
-          </button>
-          <button
-            onClick={() => onEdit(apartment)}
-            className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
-          >
-            Edit
-          </button>
+          {canEdit ? (
+            <>
+              <button
+                onClick={handleDelete}
+                className="px-3 py-2 text-sm text-rose-500/70 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => onEdit(apartment)}
+                className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
+              >
+                Edit
+              </button>
+            </>
+          ) : (
+            <div className="w-full flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-5 py-2 text-sm font-medium text-slate-400 hover:text-slate-200 border border-slate-700/50 hover:bg-white/5 rounded-lg transition-all"
+              >
+                Close
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

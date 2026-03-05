@@ -13,7 +13,7 @@ function sortApartments(apartments, sort) {
   })
 }
 
-export default function ApartmentGrid({ apartments, filter, sort, onEdit, onDelete, onSelect }) {
+export default function ApartmentGrid({ apartments, filter, sort, onEdit, onDelete, onSelect, canEdit = true, roomMode = false, onAdd }) {
   const filtered = filter === 'all' ? apartments : apartments.filter(a => a.status === filter)
   const sorted = sortApartments(filtered, sort)
 
@@ -22,7 +22,16 @@ export default function ApartmentGrid({ apartments, filter, sort, onEdit, onDele
       <div className="flex flex-col items-center justify-center py-32 text-center">
         <div className="text-5xl mb-4 opacity-20">🏠</div>
         <h2 className="text-base font-medium text-slate-400 mb-1">No apartments yet</h2>
-        <p className="text-sm text-slate-600">Hit <span className="text-slate-400">+ Add</span> to start tracking your search.</p>
+        <p className="text-sm text-slate-600">
+          {canEdit
+            ? <>Hit <span className="text-slate-400">+ Add</span> to start tracking your search.</>
+            : 'No apartments have been added to this room yet.'}
+        </p>
+        {canEdit && onAdd && roomMode && (
+          <button onClick={onAdd} className="mt-4 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors">
+            + Add Apartment
+          </button>
+        )}
       </div>
     )
   }
