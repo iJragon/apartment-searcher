@@ -25,8 +25,7 @@ export function useRoom(roomId, user) {
     setLoading(true)
     setError(null)
 
-    fetchRoom()
-    fetchApartments()
+    Promise.all([fetchRoom(), fetchApartments()]).then(() => setLoading(false))
     subscribeToRoom()
 
     return () => {
@@ -43,7 +42,6 @@ export function useRoom(roomId, user) {
 
     if (error || !data) {
       setError('Room not found or no longer available.')
-      setLoading(false)
       return
     }
     setRoom(data)
@@ -59,7 +57,6 @@ export function useRoom(roomId, user) {
     if (!error && data) {
       setApartments(data.map(rowToApartment))
     }
-    setLoading(false)
   }
 
   function subscribeToRoom() {
