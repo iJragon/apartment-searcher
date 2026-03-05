@@ -269,7 +269,7 @@ export default function App() {
       )}
 
       {showShare && user && (
-        <ShareModal user={user} onClose={() => setShowShare(false)} />
+        <ShareModal user={user} apartments={privateApartments} onClose={() => setShowShare(false)} />
       )}
     </div>
   )
