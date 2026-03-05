@@ -28,12 +28,10 @@ function StarPicker({ value, onChange }) {
   )
 }
 
-function ListBuilder({ items, onChange, placeholder }) {
-  const [input, setInput] = useState('')
-
+function ListBuilder({ items, onChange, placeholder, inputValue, onInputChange }) {
   function add() {
-    const val = input.trim()
-    if (val) { onChange([...items, val]); setInput('') }
+    const val = inputValue.trim()
+    if (val) { onChange([...items, val]); onInputChange('') }
   }
 
   return (
@@ -41,8 +39,8 @@ function ListBuilder({ items, onChange, placeholder }) {
       <div className="flex gap-2">
         <input
           type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
+          value={inputValue}
+          onChange={e => onInputChange(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), add())}
           placeholder={placeholder}
           className={INPUT_CLASS}
@@ -50,7 +48,7 @@ function ListBuilder({ items, onChange, placeholder }) {
         <button
           type="button"
           onClick={add}
-          disabled={!input.trim()}
+          disabled={!inputValue.trim()}
           className="px-3 py-2 text-sm text-slate-400 bg-slate-800/60 border border-slate-700/60 rounded-lg hover:text-slate-200 disabled:opacity-30 transition-colors shrink-0"
         >
           Add
@@ -96,10 +94,14 @@ function Field({ label, children }) {
 
 export default function ApartmentPanel({ apartment, onSave, onClose }) {
   const [form, setForm] = useState(DEFAULTS)
+  const [prosInput, setProsInput] = useState('')
+  const [consInput, setConsInput] = useState('')
   const isNew = !apartment
 
   useEffect(() => {
     setForm(apartment ? { ...DEFAULTS, ...apartment } : DEFAULTS)
+    setProsInput('')
+    setConsInput('')
   }, [apartment])
 
   const set = (field, value) => setForm(prev => ({ ...prev, [field]: value }))
@@ -131,7 +133,13 @@ export default function ApartmentPanel({ apartment, onSave, onClose }) {
 
         {/* Form */}
         <form
-          onSubmit={e => { e.preventDefault(); onSave(form) }}
+          onSubmit={e => {
+            e.preventDefault()
+            const finalForm = { ...form }
+            if (prosInput.trim()) finalForm.pros = [...(form.pros ?? []), prosInput.trim()]
+            if (consInput.trim()) finalForm.cons = [...(form.cons ?? []), consInput.trim()]
+            onSave(finalForm)
+          }}
           className="flex-1 overflow-y-auto"
         >
           <div className="px-6 py-6 space-y-7">
@@ -219,12 +227,12 @@ export default function ApartmentPanel({ apartment, onSave, onClose }) {
 
             <Section title="Pros">
               <ListBuilder items={form.pros} onChange={v => set('pros', v)}
-                placeholder="What do you like about it?" />
+                placeholder="What do you like about it?" inputValue={prosInput} onInputChange={setProsInput} />
             </Section>
 
             <Section title="Cons">
               <ListBuilder items={form.cons} onChange={v => set('cons', v)}
-                placeholder="Any concerns or downsides?" />
+                placeholder="Any concerns or downsides?" inputValue={consInput} onInputChange={setConsInput} />
             </Section>
 
             <Section title="Notes">
