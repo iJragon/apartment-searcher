@@ -33,7 +33,7 @@ export default function AuthModal({ onAuth, onClose }) {
   return (
     <>
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50" onClick={onClose} />
-      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-sm bg-slate-950 border border-white/[0.08] rounded-2xl shadow-2xl z-50 p-6">
+      <div className="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-sm bg-slate-950 border border-white/[0.08] rounded-2xl shadow-2xl z-50 p-6">
 
         {done ? (
           <div className="text-center py-4">
