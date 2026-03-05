@@ -37,8 +37,6 @@ export default function App() {
     addApartment: privateAdd,
     updateApartment: privateUpdate,
     deleteApartment: privateDelete,
-    exportData,
-    importData,
   } = useApartments()
 
   // Shared room (Supabase) — only active when ?room= is in URL
@@ -123,15 +121,6 @@ export default function App() {
     }
   }
 
-  async function handleImport(file) {
-    try {
-      const count = await importData(file, 'merge')
-      alert(`Imported ${count} apartment${count !== 1 ? 's' : ''} successfully.`)
-    } catch (err) {
-      alert('Import failed: ' + err.message)
-    }
-  }
-
   function handleShareClick() {
     if (!user) { setShowAuth(true); return }
     setShowShare(true)
@@ -189,8 +178,6 @@ export default function App() {
       <Header
         count={apartments.length}
         onAdd={handleAdd}
-        onExport={exportData}
-        onImport={handleImport}
         user={user}
         profile={profile}
         onSignIn={() => setShowAuth(true)}
